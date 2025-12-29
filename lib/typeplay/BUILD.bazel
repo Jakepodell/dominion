@@ -1,0 +1,6 @@
+cc_library(
+    name="typeplay",
+    hdrs = glob(["typeplay/**/*.hpp"]),
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
