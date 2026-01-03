@@ -1,27 +1,22 @@
-#include "dominion/card.hpp"
-#include "dominion/player.hpp"
+#include "dominion/gameState.hpp"
 #include "typeplay/print.hpp"
 #include <iostream>
 
 using typeplay::print;
 
 int main() {
-  std::cout << std::boolalpha;
+  // RAII: Game acquires all resources on construction
+  auto gameState = dominion::GameState::createGame({"Shayna", "Jake"});
 
-  // auto a = dominion::is_card<float>::value;
-  // auto numvar = 3;
-  // auto numvartype = decltype(numvar);
-  std::unique_ptr<dominion::Card> myFirstCard =
-      std::make_unique<dominion::Village>();
-  myFirstCard->play();
-  dominion::Player p1("Podr");
-  p1.initDeck();
-  p1.printSituation();
-  p1.shuffleDeck();
-  std::cout << p1.getName() << " shuffles their deck." << std::endl;
-  p1.printSituation();
-  std::cout << p1.getName() << " draws 5 cards." << std::endl;
-  p1.draw(11);
-  p1.printSituation();
+  // Resources are automatically managed
+  gameState.startGame();
+  std::cout << "playing all treasures for current player: "
+            << gameState.getCurrentPlayer().getName() << std::endl;
+  gameState.playAllTreasures();
+  std::cout << "played all treasures" << std::endl;
+  gameState.getCurrentPlayer().printSituation();
+
+  // When game goes out of scope, all resources are cleaned up
   return 0;
 }
+// Game destructor called here - automatic cleanup!

@@ -1,6 +1,7 @@
 cc_library(
     name="dominion",
     hdrs = glob(["dominion/**/*.hpp"]),
+    srcs = glob(["dominion/**/*.cpp"]),
     includes = ["."],
     visibility = ["//visibility:public"],
     deps = ["//lib/typeplay:typeplay"]

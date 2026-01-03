@@ -1,21 +1,26 @@
 #pragma once
 
+#include "dominion/gameEffect.hpp"
 #include "typeplay/print.hpp"
 #include <string>
 #include <type_traits>
 #include <vector>
 
-using typeplay::print;
-
 namespace dominion {
 
 enum class CardType { Action, Treasure, Victory };
 
-struct Card {
+class Card {
+public:
   virtual ~Card() = default;
-  virtual void play() const = 0;
+  virtual std::unique_ptr<GameEffect> createEffect() const = 0;
   virtual std::vector<CardType> types() const = 0;
   virtual std::string const getName() const = 0;
+  virtual bool isType(CardType type) const {
+    auto cardTypes = types();
+    return std::find(cardTypes.begin(), cardTypes.end(), type) !=
+           cardTypes.end();
+  }
   std::string const getShortName() const {
     auto abbrev = getName().substr(0, 2);
     std::transform(abbrev.begin(), abbrev.end(), abbrev.begin(), ::toupper);
@@ -28,17 +33,30 @@ struct Card {
 
 // ------------ BASE CARD TYPES ------------
 
-struct PureAction : Card {
-  std::vector<CardType> types() const final { return {CardType::Action}; }
+class PureActionCard : public Card {
+public:
+  std::unique_ptr<GameEffect> createEffect() const override {
+    typeplay::print("Playing action card: ", getName());
+    return std::make_unique<NothingEffect>();
+  }
+  std::vector<CardType> types() const override { return {CardType::Action}; }
 };
 
-struct PureTreasure : Card {
-  std::vector<CardType> types() const final { return {CardType::Treasure}; }
+class PureTreasureCard : public Card {
+public:
+  std::unique_ptr<GameEffect> createEffect() const override {
+    return std::make_unique<GainMoneyEffect>(moneyValue());
+  }
+  std::vector<CardType> types() const override { return {CardType::Treasure}; }
   virtual const int moneyValue() const = 0;
 };
 
-struct PureVictory : Card {
-  std::vector<CardType> types() const final { return {CardType::Victory}; }
+class PureVictoryCard : public Card {
+public:
+  std::unique_ptr<GameEffect> createEffect() const override {
+    return std::make_unique<NothingEffect>();
+  }
+  std::vector<CardType> types() const override { return {CardType::Victory}; }
   virtual const int victoryValue() const = 0;
 };
 
@@ -46,50 +64,56 @@ struct PureVictory : Card {
 
 // Treasures
 
-struct Copper : PureTreasure {
-  void play() const final { print("User has played the copper"); }
+class Copper : public PureTreasureCard {
+public:
   const int moneyValue() const final { return 1; }
   std::string const getName() const final { return "Copper"; }
 };
 
-struct Silver : PureTreasure {
-  void play() const final { print("User has played the silver"); }
+class Silver : public PureTreasureCard {
+public:
   const int moneyValue() const final { return 2; }
   std::string const getName() const final { return "Silver"; }
 };
 
-struct Gold : PureTreasure {
-  void play() const final { print("User has played the gold"); }
+class Gold : public PureTreasureCard {
+public:
   const int moneyValue() const final { return 3; }
   std::string const getName() const final { return "Gold"; }
 };
 
 // Victory Cards
 
-struct Estate : PureVictory {
-  void play() const final { print("User has played the estate"); }
+class Estate : public PureVictoryCard {
+public:
   const int victoryValue() const final { return 1; }
   std::string const getName() const final { return "Estate"; }
 };
 
-struct Duchy : PureVictory {
-  void play() const final { print("User has played the duchy"); }
+class Duchy : public PureVictoryCard {
+public:
   const int victoryValue() const final { return 3; }
   std::string const getName() const final { return "Duchy"; }
 };
 
-struct Provence : PureVictory {
-  void play() const final { print("User has played the provence"); }
+class Provence : public PureVictoryCard {
+public:
   const int victoryValue() const final { return 6; }
   std::string const getName() const final { return "Provence"; }
 };
 
 // Action Cards
 
-struct Village : Card {
-  void play() const final { print("User has played the village"); }
+class Village : public PureActionCard {
+public:
   std::vector<CardType> types() const final { return {CardType::Action}; }
   std::string const getName() const final { return "Village"; }
+};
+
+class Smithy : public PureActionCard {
+public:
+  std::vector<CardType> types() const final { return {CardType::Action}; }
+  std::string const getName() const final { return "Smithy"; }
 };
 
 template <typename T> struct is_card : std::false_type {};

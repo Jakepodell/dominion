@@ -1,6 +1,7 @@
 #pragma once
 
-#include "card.hpp"
+#include "dominion/card.hpp"
+#include "typeplay/print.hpp"
 #include <algorithm>
 #include <cctype> // for ::toupper
 #include <deque>
@@ -9,7 +10,10 @@
 #include <string>
 
 namespace dominion {
+class GameState; // Forward declaration
+
 class Player {
+
 public:
   Player(const std::string &name) : name_(name) {}
 
@@ -22,25 +26,28 @@ public:
     for (int i = 0; i < 3; i++) {
       deck_.push_back(std::make_unique<Estate>());
     }
+    shuffleDeck();
   }
 
   void printSituation() const {
-    print("Player: ", name_);
+    typeplay::print("Player: ", name_);
 
-    print("Deck [", deck_.size(), "]: ");
+    typeplay::print("Deck [", deck_.size(), "]: ");
     for (const auto &card : deck_) {
-      print("[", card->getShortName(), "] ");
+      typeplay::print("[", card->getShortName(), "] ");
     }
 
-    print("Hand [", hand_.size(), "]: ");
+    typeplay::print("Hand [", hand_.size(), "]: ");
     for (const auto &card : hand_) {
-      print("[", card->getShortName(), "] ");
+      typeplay::print("[", card->getShortName(), "] ");
     }
 
-    print("Discard pile [", discardPile_.size(), "]: ");
+    typeplay::print("Discard pile [", discardPile_.size(), "]: ");
     for (const auto &card : discardPile_) {
-      print("[", card->getShortName(), "] ");
+      typeplay::print("[", card->getShortName(), "] ");
     }
+
+    typeplay::print("Money: ", money_);
   }
 
   void moveDiscardIntoDeck() { deck_ = std::move(discardPile_); }
@@ -69,10 +76,29 @@ public:
     return;
   }
 
+  void addMoney(int amount) { money_ += amount; }
+  int money() const { return money_; }
+
+  // Add these getter methods
+  const std::deque<std::unique_ptr<Card>> &getHand() const { return hand_; }
+  const Card *getCardAt(size_t index) const {
+    return index < hand_.size() ? hand_[index].get() : nullptr;
+  }
+
+  // todo should make sure that the index is valid
+  std::unique_ptr<Card> removeCardFromHand(size_t index) {
+    auto card = std::move(hand_[index]);
+    hand_.erase(hand_.begin() + index);
+    return card;
+  }
+
+  size_t getHandSize() const { return hand_.size(); }
+
 private:
   std::string name_;
   std::deque<std::unique_ptr<Card>> deck_;
   std::deque<std::unique_ptr<Card>> hand_;
   std::deque<std::unique_ptr<Card>> discardPile_;
+  int money_ = 0;
 };
 } // namespace dominion
